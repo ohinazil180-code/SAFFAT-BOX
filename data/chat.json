@@ -61,5 +61,14 @@
     "body": "hi",
     "id": "9b7d4b97-ca09-4e4e-8fc5-7af2ddca4a81",
     "createdAt": "2026-09-18T16:09:22.317Z"
+  },
+  {
+    "conversationId": "user:usr_demo_alex_dropcode",
+    "senderId": "usr_demo_alex_dropcode",
+    "senderName": "Alex Rivera",
+    "senderRole": "user",
+    "body": "hi",
+    "id": "3965beb2-e2be-4521-ba9a-5b1c55f81169",
+    "createdAt": "2026-09-18T16:13:34.965Z"
   }
 ]

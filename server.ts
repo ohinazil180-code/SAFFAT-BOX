@@ -44,7 +44,9 @@ async function startServer() {
         hmr: false,
         watch: null,
       },
-      appType: 'spa',
+      // Custom mode avoids Vite's SPA HTML transform, including the
+      // development client that attempts an unsupported HMR WebSocket.
+      appType: 'custom',
     });
     // This custom Express server intentionally disables Vite HMR. Prevent the
     // preview-injected client from opening a WebSocket that this server does
