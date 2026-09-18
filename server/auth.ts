@@ -279,6 +279,40 @@ class AuthStore {
     return user ? this.toPublicUser(user) : null;
   }
 
+  public updateUser(
+    userId: string,
+    payload: { username?: string; name?: string; avatarColor?: string }
+  ): { success: boolean; user?: PublicUser; error?: string } {
+    const user = this.users.get(userId);
+    if (!user) return { success: false, error: 'User account not found' };
+
+    const nextUsername = payload.username?.trim();
+    if (nextUsername && !/^[a-zA-Z0-9_-]{3,20}$/.test(nextUsername)) {
+      return { success: false, error: 'Username must be 3-20 characters and only contain letters, numbers, hyphens, or underscores' };
+    }
+
+    if (nextUsername && nextUsername.toLowerCase() !== user.username.toLowerCase()) {
+      const existingId = this.usernameToId.get(nextUsername.toLowerCase());
+      if (existingId && existingId !== userId) return { success: false, error: 'This username is already taken' };
+      this.usernameToId.delete(user.username.toLowerCase());
+      this.usernameToId.set(nextUsername.toLowerCase(), userId);
+      user.username = nextUsername;
+    }
+
+    if (payload.name !== undefined) {
+      const nextName = payload.name.trim();
+      user.name = nextName || user.username;
+    }
+    if (payload.avatarColor && AVATAR_GRADIENTS.includes(payload.avatarColor)) {
+      user.avatarColor = payload.avatarColor;
+    }
+
+    this.saveToDisk();
+    const publicUser = this.toPublicUser(user);
+    this.notify('profile_updated', publicUser);
+    return { success: true, user: publicUser };
+  }
+
   public deleteSession(token: string): boolean {
     if (this.sessions.has(token)) {
       this.sessions.delete(token);

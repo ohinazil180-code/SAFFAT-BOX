@@ -535,6 +535,22 @@ router.get('/auth/me', (req: Request, res: Response): void => {
   res.json({ success: true, user, stats });
 });
 
+// PATCH /api/auth/profile - Update the authenticated user's profile
+router.patch('/auth/profile', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+  const { username, name, avatarColor } = req.body || {};
+  const result = globalAuthStore.updateUser(user.id, { username, name, avatarColor });
+  if (!result.success) {
+    res.status(400).json({ error: result.error });
+    return;
+  }
+  res.json({ success: true, user: result.user });
+});
+
 // POST /api/auth/logout - Terminate session
 router.post('/auth/logout', (req: Request, res: Response): void => {
   const authHeader = req.headers.authorization;
