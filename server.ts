@@ -39,7 +39,11 @@ async function startServer() {
       // WebSocket upgrade required by HMR in middleware mode. Disable HMR to
       // prevent the injected Vite client from opening a connection that can
       // never be upgraded by this server.
-      server: { middlewareMode: true, hmr: false },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+        watch: null,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);

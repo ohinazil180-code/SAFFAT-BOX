@@ -42,12 +42,6 @@
       "expiresAt": "2026-10-18T15:47:31.372Z"
     },
     {
-      "token": "7dc1607fb45d270ff3c6acf796db1228bdebbd6f9d3bd034753c9e2ea1e3eeac",
-      "userId": "usr_demo_alex_dropcode",
-      "createdAt": "2026-09-18T15:48:05.994Z",
-      "expiresAt": "2026-10-18T15:48:05.994Z"
-    },
-    {
       "token": "255ee68079ad58f8e26e51dd2d897e2cb425fffd6b287c78a518173a353df22f",
       "userId": "usr_support_admin",
       "createdAt": "2026-09-18T15:51:28.532Z",
