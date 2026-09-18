@@ -11,12 +11,5 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
-    server: {
-      // The app runs Vite behind a custom Express HTTP server. That server
-      // does not proxy Vite's HMR upgrade endpoint, so the injected Vite
-      // client can otherwise open a socket that immediately closes.
-      hmr: false,
-      watch: null,
-    },
   };
 });
