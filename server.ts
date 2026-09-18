@@ -46,6 +46,12 @@ async function startServer() {
       },
       appType: 'spa',
     });
+    // This custom Express server intentionally disables Vite HMR. Prevent the
+    // preview-injected client from opening a WebSocket that this server does
+    // not own, which causes "WebSocket closed without opened" errors.
+    app.get(['/@vite/client', '/@react-refresh'], (_req, res) => {
+      res.type('application/javascript').send('');
+    });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');

@@ -52,5 +52,14 @@
     "body": "where r u from",
     "id": "0216e608-01ae-4886-831b-8c8955543e9f",
     "createdAt": "2026-09-18T16:01:46.715Z"
+  },
+  {
+    "conversationId": "user:usr_demo_alex_dropcode",
+    "senderId": "usr_support_admin",
+    "senderName": "Support Admin",
+    "senderRole": "admin",
+    "body": "hi",
+    "id": "9b7d4b97-ca09-4e4e-8fc5-7af2ddca4a81",
+    "createdAt": "2026-09-18T16:09:22.317Z"
   }
 ]
