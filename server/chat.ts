@@ -21,6 +21,7 @@ export type ChatMessage = {
   senderRole: 'user' | 'admin';
   body: string;
   createdAt: string;
+  attachment?: { name: string; mimeType: string; size: number; storagePath: string; url: string };
 };
 
 class ChatStore {
@@ -70,6 +71,7 @@ class ChatStore {
   getAllMetadata() { return [...this.metadata.values()]; }
 
   getConversation(conversationId: string) { return this.messages.filter((message) => message.conversationId === conversationId); }
+  findAttachment(fileId: string) { return this.messages.find((message) => message.attachment?.url.endsWith(`/attachments/${fileId}`)); }
   getConversations() {
     const map = new Map<string, ChatMessage>();
     for (const message of this.messages) map.set(message.conversationId, message);

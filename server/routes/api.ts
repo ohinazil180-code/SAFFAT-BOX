@@ -743,4 +743,28 @@ router.post('/chat/:conversationId/messages', (req: Request, res: Response): voi
   res.status(201).json({ message });
 });
 
+router.post('/chat/:conversationId/attachments', upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const conversationId = conversationForAdmin(req.params.conversationId);
+  if (!isAdminEmail(user.email) && conversationId !== conversationForUser(user.id)) { res.status(403).json({ error: 'Not allowed' }); return; }
+  const file = req.file;
+  if (!file) { res.status(400).json({ error: 'File is required' }); return; }
+  if (file.size > 25 * 1024 * 1024) { res.status(413).json({ error: 'Files must be 25MB or smaller' }); return; }
+  const fileId = crypto.randomUUID();
+  const storagePath = path.join('chat', fileId.slice(0, 2), `${fileId}_${sanitizeFilename(file.originalname)}`);
+  await activeStorageProvider.upload(storagePath, file.buffer, file.mimetype);
+  const attachment = { name: file.originalname, mimeType: file.mimetype || 'application/octet-stream', size: file.size, storagePath, url: `/api/chat/attachments/${fileId}` };
+  const message = chatStore.addMessage({ conversationId, senderId: user.id, senderName: isAdminEmail(user.email) ? 'Support Admin' : user.name, senderRole: isAdminEmail(user.email) ? 'admin' : 'user', body: `Attached ${file.originalname}`, attachment });
+  res.status(201).json({ message });
+});
+
+router.get('/chat/attachments/:fileId', async (req: Request, res: Response): Promise<void> => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const message = chatStore.findAttachment(req.params.fileId);
+  if (!message || (!isAdminEmail(user.email) && message.conversationId !== conversationForUser(user.id))) { res.status(404).json({ error: 'Attachment not found' }); return; }
+  try { const buffer = await activeStorageProvider.downloadBuffer(message.attachment!.storagePath); res.type(message.attachment!.mimeType).setHeader('Content-Disposition', `inline; filename="${sanitizeFilename(message.attachment!.name)}"`).send(buffer); } catch { res.status(404).json({ error: 'Attachment not found' }); }
+});
+
 export default router;
