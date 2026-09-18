@@ -2,6 +2,17 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
+export type ConversationStatus = 'open' | 'pending' | 'closed';
+export type ConversationPriority = 'normal' | 'high' | 'urgent';
+
+export type ConversationMeta = {
+  conversationId: string;
+  status: ConversationStatus;
+  priority: ConversationPriority;
+  assignedTo?: string;
+  updatedAt: string;
+};
+
 export type ChatMessage = {
   id: string;
   conversationId: string;
@@ -14,8 +25,10 @@ export type ChatMessage = {
 
 class ChatStore {
   private messages: ChatMessage[] = [];
+  private metadata = new Map<string, ConversationMeta>();
   private filePath = path.resolve(process.cwd(), 'data', 'chat.json');
   private listeners = new Set<(message: ChatMessage) => void>();
+  private metaListeners = new Set<(meta: ConversationMeta) => void>();
 
   constructor() {
     try {
@@ -29,14 +42,32 @@ class ChatStore {
   }
 
   subscribe(listener: (message: ChatMessage) => void) { this.listeners.add(listener); return () => this.listeners.delete(listener); }
+  subscribeMeta(listener: (meta: ConversationMeta) => void) { this.metaListeners.add(listener); return () => this.metaListeners.delete(listener); }
 
   addMessage(input: Omit<ChatMessage, 'id' | 'createdAt'>) {
+    const now = new Date().toISOString();
+    const existing = this.metadata.get(input.conversationId);
+    this.metadata.set(input.conversationId, { conversationId: input.conversationId, status: existing?.status === 'closed' ? 'open' : existing?.status || 'open', priority: existing?.priority || 'normal', assignedTo: existing?.assignedTo, updatedAt: now });
     const message = { ...input, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     this.messages.push(message);
     this.save();
     this.listeners.forEach((listener) => listener(message));
+    const meta = this.metadata.get(input.conversationId)!;
+    this.metaListeners.forEach((listener) => listener(meta));
     return message;
   }
+
+  updateConversation(conversationId: string, patch: Partial<Pick<ConversationMeta, 'status' | 'priority' | 'assignedTo'>>) {
+    const current = this.metadata.get(conversationId) || { conversationId, status: 'open' as const, priority: 'normal' as const, updatedAt: new Date().toISOString() };
+    const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    this.metadata.set(conversationId, next);
+    this.save();
+    this.metaListeners.forEach((listener) => listener(next));
+    return next;
+  }
+
+  getConversationMeta(conversationId: string) { return this.metadata.get(conversationId) || { conversationId, status: 'open' as const, priority: 'normal' as const, updatedAt: new Date().toISOString() }; }
+  getAllMetadata() { return [...this.metadata.values()]; }
 
   getConversation(conversationId: string) { return this.messages.filter((message) => message.conversationId === conversationId); }
   getConversations() {

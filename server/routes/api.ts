@@ -709,7 +709,19 @@ router.get('/health', (req: Request, res: Response): void => {
 router.get('/chat/conversations', (req: Request, res: Response): void => {
   const user = getAuthUser(req);
   if (!user || !isAdminEmail(user.email)) { res.status(403).json({ error: 'Admin access required' }); return; }
-  res.json({ conversations: chatStore.getConversations() });
+  res.json({ conversations: chatStore.getConversations().map((conversation) => ({ ...conversation, meta: chatStore.getConversationMeta(conversation.conversationId) })) });
+});
+
+router.patch('/chat/:conversationId', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user || !isAdminEmail(user.email)) { res.status(403).json({ error: 'Admin access required' }); return; }
+  const conversationId = conversationForAdmin(req.params.conversationId);
+  const patch = {
+    status: ['open', 'pending', 'closed'].includes(req.body?.status) ? req.body.status : undefined,
+    priority: ['normal', 'high', 'urgent'].includes(req.body?.priority) ? req.body.priority : undefined,
+    assignedTo: typeof req.body?.assignedTo === 'string' ? req.body.assignedTo.trim().slice(0, 120) : undefined,
+  };
+  res.json({ success: true, meta: chatStore.updateConversation(conversationId, patch) });
 });
 
 router.get('/chat/:conversationId', (req: Request, res: Response): void => {

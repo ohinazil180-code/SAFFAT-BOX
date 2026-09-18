@@ -29,7 +29,7 @@
       "name": "Support Admin",
       "passwordHash": "6078615cdca656e693a822cbc613c14fd76d501148ec12aff25c1273e35634bbc0960311c579144c61fe3f9d79219b0aaeacdc7fbd3c7ced4742c26ece621b51",
       "passwordSalt": "898a50036a5754f11ce2a26e1282e321",
-      "avatarColor": "from-emerald-400 to-teal-600",
+      "avatarColor": "from-fuchsia-500 to-pink-500",
       "createdAt": "2026-09-18T15:51:23.959Z",
       "lastLoginAt": "2026-09-18T15:59:38.083Z"
     }
