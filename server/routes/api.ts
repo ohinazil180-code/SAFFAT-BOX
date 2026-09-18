@@ -10,6 +10,7 @@ import { globalAuthStore } from '../auth.js';
 import { activeStorageProvider } from '../storage/storageProvider.js';
 import { calculateChecksum, sanitizeFilename, isBrowserSafePreview, sanitizeShareCode } from '../utils/crypto.js';
 import { StoredFile, PublicShareResponse, PublicFileInfo, PublicUser } from '../types.js';
+import { chatStore, conversationForUser, conversationForAdmin, isAdminEmail, normalizeChatBody } from '../chat.js';
 
 const router = express.Router();
 
@@ -688,6 +689,31 @@ router.get('/stats', (req: Request, res: Response): void => {
 // GET /api/health
 router.get('/health', (req: Request, res: Response): void => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+router.get('/chat/conversations', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user || !isAdminEmail(user.email)) { res.status(403).json({ error: 'Admin access required' }); return; }
+  res.json({ conversations: chatStore.getConversations() });
+});
+
+router.get('/chat/:conversationId', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const requested = conversationForAdmin(req.params.conversationId);
+  if (!isAdminEmail(user.email) && requested !== conversationForUser(user.id)) { res.status(403).json({ error: 'Not allowed' }); return; }
+  res.json({ messages: chatStore.getConversation(requested) });
+});
+
+router.post('/chat/:conversationId/messages', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const conversationId = conversationForAdmin(req.params.conversationId);
+  if (!isAdminEmail(user.email) && conversationId !== conversationForUser(user.id)) { res.status(403).json({ error: 'Not allowed' }); return; }
+  const body = normalizeChatBody(req.body?.body);
+  if (!body) { res.status(400).json({ error: 'Message cannot be empty' }); return; }
+  const message = chatStore.addMessage({ conversationId, senderId: user.id, senderName: isAdminEmail(user.email) ? 'Support Admin' : user.name, senderRole: isAdminEmail(user.email) ? 'admin' : 'user', body });
+  res.status(201).json({ message });
 });
 
 export default router;

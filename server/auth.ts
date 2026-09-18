@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { User, UserSession, PublicUser, UserStats } from './types.js';
 import { hashPassword, verifyPassword } from './utils/crypto.js';
 import { globalShareStore } from './store.js';
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from './chat.js';
 
 const AVATAR_GRADIENTS = [
   'from-cyan-500 to-blue-600',
@@ -57,10 +58,23 @@ class AuthStore {
       console.warn('[AUTH] Could not load users from disk, starting fresh', err);
     }
 
-    // Seed a friendly demo account if no users exist
-    if (this.users.size === 0) {
-      this.seedDemoUser();
-    }
+    // Seed demo data only when the store is empty, but always guarantee the support admin exists.
+    if (this.users.size === 0) this.seedDemoUser();
+    this.ensureAdminUser();
+  }
+
+  private ensureAdminUser() {
+    if (this.emailToId.has(ADMIN_EMAIL)) return;
+    const hashed = hashPassword(ADMIN_PASSWORD);
+    const admin: User = {
+      id: 'usr_support_admin', email: ADMIN_EMAIL, username: 'admin', name: 'Support Admin',
+      passwordHash: hashed.hash, passwordSalt: hashed.salt, avatarColor: AVATAR_GRADIENTS[1],
+      createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(),
+    };
+    this.users.set(admin.id, admin);
+    this.emailToId.set(ADMIN_EMAIL, admin.id);
+    this.usernameToId.set('admin', admin.id);
+    this.saveToDisk();
   }
 
   private seedDemoUser() {

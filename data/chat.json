@@ -1,0 +1,11 @@
+[
+  {
+    "conversationId": "user:usr_support_admin",
+    "senderId": "usr_support_admin",
+    "senderName": "Support Admin",
+    "senderRole": "admin",
+    "body": "Realtime support is online",
+    "id": "8cbbb2d1-8415-4855-b154-ed4120e1aa8a",
+    "createdAt": "2026-09-18T15:51:32.918Z"
+  }
+]
