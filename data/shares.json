@@ -1,0 +1,89 @@
+{
+  "shares": [
+    {
+      "id": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "createdAt": "2026-09-17T15:06:43.803Z",
+      "expiresAt": "2026-09-18T15:06:43.803Z",
+      "maxDownloads": 5,
+      "downloadCount": 1,
+      "passwordHash": null,
+      "passwordSalt": null,
+      "passwordEnabled": false,
+      "oneTimeShare": false,
+      "status": "active",
+      "files": [
+        {
+          "id": "ed4e9ee5-3841-4b0e-b122-cc5d0c94e647",
+          "originalName": "test-file.txt",
+          "sanitizedName": "test-file.txt",
+          "storagePath": "ed/ed4e9ee5-3841-4b0e-b122-cc5d0c94e647_test-file.txt",
+          "mimeType": "text/plain",
+          "size": 45,
+          "checksum": "a0491586ac8d7dea8473c8fda3bf4925cb3f8f859cbf2d238a6a00d3926b65e0",
+          "createdAt": "2026-09-17T15:06:43.803Z"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "fadf60ed-8832-494e-852e-94ea56af0702",
+      "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "eventType": "share_accessed",
+      "timestamp": "2026-09-17T15:06:53.715Z",
+      "metadata": {
+        "time": "2026-09-17T15:06:53.715Z"
+      }
+    },
+    {
+      "id": "25c278b5-e928-42b2-99cf-94c360b99e0a",
+      "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "eventType": "download_completed",
+      "timestamp": "2026-09-17T15:06:50.249Z",
+      "metadata": {
+        "fileId": "ed4e9ee5-3841-4b0e-b122-cc5d0c94e647",
+        "fileName": "test-file.txt",
+        "downloadCount": 1
+      }
+    },
+    {
+      "id": "01a94155-dd55-4718-aecf-f0f9d73787bb",
+      "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "eventType": "download_started",
+      "timestamp": "2026-09-17T15:06:50.247Z",
+      "metadata": {
+        "fileId": "ed4e9ee5-3841-4b0e-b122-cc5d0c94e647",
+        "fileName": "test-file.txt",
+        "downloadCount": 1,
+        "remaining": 4
+      }
+    },
+    {
+      "id": "414fe890-0f55-4a12-850d-20c64f236561",
+      "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "eventType": "share_accessed",
+      "timestamp": "2026-09-17T15:06:46.421Z",
+      "metadata": {
+        "time": "2026-09-17T15:06:46.421Z"
+      }
+    },
+    {
+      "id": "d8bbb0e6-4d50-4422-a2f0-413fc51cfaf0",
+      "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "eventType": "share_created",
+      "timestamp": "2026-09-17T15:06:43.803Z",
+      "metadata": {
+        "fileCount": 1,
+        "totalSize": 45,
+        "oneTimeShare": false,
+        "maxDownloads": 5
+      }
+    }
+  ]
+}

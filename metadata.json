@@ -1,0 +1,6 @@
+{
+  "name": "Drop Code",
+  "description": "Universal real-time file sharing platform with user accounts, instant secure codes, download limits, expiration, live transfer tracking, and omni-channel link sharing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
