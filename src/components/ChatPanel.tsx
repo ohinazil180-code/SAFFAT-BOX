@@ -27,10 +27,21 @@ export const ChatPanel: React.FC = () => {
       fetch('/api/chat/conversations', { headers: { Authorization: `Bearer ${token || ''}` } }).then((r) => r.ok ? r.json() : { conversations: [] }).then((data) => { setConversations(data.conversations); if (!selected && data.conversations[0]) setSelected(data.conversations[0].conversationId); });
     }
     if (conversationId) loadMessages(conversationId);
-    const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/chat?token=${encodeURIComponent(token || '')}`);
+    if (!token) return;
+    const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/chat?token=${encodeURIComponent(token)}`);
+    let disposed = false;
+    socket.onopen = () => {
+      if (disposed) socket.close();
+    };
     socket.onmessage = (event) => { const data = JSON.parse(event.data); if (data.type === 'chat.message') { setMessages((current) => current.some((item) => item.id === data.message.id) ? current : [...current, data.message]); setConversations((current) => [data.message, ...current.filter((item) => item.conversationId !== data.message.conversationId)]); } };
-    return () => socket.close();
-  }, [open, user, selected, conversationId, isAdmin]);
+    socket.onerror = () => undefined;
+    return () => {
+      disposed = true;
+      // Closing a CONNECTING WebSocket causes the browser's "closed without
+      // opened" runtime error during logout. Let it finish, then close it.
+      if (socket.readyState === WebSocket.OPEN) socket.close();
+    };
+  }, [open, user, token, selected, conversationId, isAdmin]);
 
   const send = async (event: React.FormEvent) => {
     event.preventDefault();

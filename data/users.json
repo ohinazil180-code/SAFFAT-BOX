@@ -9,7 +9,7 @@
       "passwordSalt": "72d96cfc78ff4aab79f9139532470cbf",
       "avatarColor": "from-cyan-500 to-blue-600",
       "createdAt": "2026-09-18T15:43:44.143Z",
-      "lastLoginAt": "2026-09-18T15:48:05.994Z"
+      "lastLoginAt": "2026-09-18T16:01:10.527Z"
     },
     {
       "id": "usr_5f4581be-9713-4a0d-bf1c-2d004e3907c0",
@@ -31,7 +31,7 @@
       "passwordSalt": "898a50036a5754f11ce2a26e1282e321",
       "avatarColor": "from-emerald-400 to-teal-600",
       "createdAt": "2026-09-18T15:51:23.959Z",
-      "lastLoginAt": "2026-09-18T15:51:32.893Z"
+      "lastLoginAt": "2026-09-18T15:59:38.083Z"
     }
   ],
   "sessions": [
@@ -52,6 +52,18 @@
       "userId": "usr_support_admin",
       "createdAt": "2026-09-18T15:51:32.893Z",
       "expiresAt": "2026-10-18T15:51:32.893Z"
+    },
+    {
+      "token": "c2134a78e1b16ce30ed292b62902faaed948ae0f279b38f1097232fe5688f945",
+      "userId": "usr_support_admin",
+      "createdAt": "2026-09-18T15:59:38.084Z",
+      "expiresAt": "2026-10-18T15:59:38.084Z"
+    },
+    {
+      "token": "39b2fa7a395b6e9dfdefade46c0a5be5b8ceb1e4c933f801bb7034be519a8041",
+      "userId": "usr_demo_alex_dropcode",
+      "createdAt": "2026-09-18T16:01:10.528Z",
+      "expiresAt": "2026-10-18T16:01:10.528Z"
     }
   ]
 }

@@ -7,5 +7,23 @@
     "body": "Realtime support is online",
     "id": "8cbbb2d1-8415-4855-b154-ed4120e1aa8a",
     "createdAt": "2026-09-18T15:51:32.918Z"
+  },
+  {
+    "conversationId": "user:usr_support_admin",
+    "senderId": "usr_support_admin",
+    "senderName": "Support Admin",
+    "senderRole": "admin",
+    "body": "hi",
+    "id": "1c05e5bc-d8a4-452f-a729-547b8c6d79b8",
+    "createdAt": "2026-09-18T15:59:51.715Z"
+  },
+  {
+    "conversationId": "user:usr_demo_alex_dropcode",
+    "senderId": "usr_demo_alex_dropcode",
+    "senderName": "Alex Rivera",
+    "senderRole": "user",
+    "body": "hi",
+    "id": "a0c7907c-6dc3-4926-8eb0-89707f1c0f44",
+    "createdAt": "2026-09-18T16:01:16.986Z"
   }
 ]
