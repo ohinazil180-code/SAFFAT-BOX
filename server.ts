@@ -1,5 +1,4 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import apiRouter from './server/routes/api.js';
 import { createServer } from 'http';
@@ -32,36 +31,13 @@ async function startServer() {
     res.redirect(`/?code=${encodeURIComponent(code)}`);
   });
 
-  // Vite middleware in dev, static files in production
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      // The Express server owns the HTTP listener, so Vite cannot handle the
-      // WebSocket upgrade required by HMR in middleware mode. Disable HMR to
-      // prevent the injected Vite client from opening a connection that can
-      // never be upgraded by this server.
-      server: {
-        middlewareMode: true,
-        hmr: false,
-        watch: null,
-      },
-      // Custom mode avoids Vite's SPA HTML transform, including the
-      // development client that attempts an unsupported HMR WebSocket.
-      appType: 'custom',
-    });
-    // This custom Express server intentionally disables Vite HMR. Prevent the
-    // preview-injected client from opening a WebSocket that this server does
-    // not own, which causes "WebSocket closed without opened" errors.
-    app.get(['/@vite/client', '/@react-refresh'], (_req, res) => {
-      res.type('application/javascript').send('');
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  // Serve the prebuilt client directly. The custom Express server owns the
+  // preview, so Vite middleware/HMR is intentionally never started.
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
 
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws/chat' });
