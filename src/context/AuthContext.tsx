@@ -13,6 +13,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (profile: { username: string; name: string; avatarColor: string }) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   openAuthModal: (tab?: 'login' | 'signup') => void;
   closeAuthModal: () => void;
 }
@@ -173,6 +175,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!token) return { success: false, error: 'Please sign in first' };
+    const res = await fetch('/api/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ currentPassword, newPassword }) });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error || 'Could not change password' };
+    return { success: true };
+  };
+
+  const deleteAccount = async () => {
+    if (!token) return { success: false, error: 'Please sign in first' };
+    const res = await fetch('/api/auth/account', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error || 'Could not delete account' };
+    setUser(null); setUserStats(null); setToken(null); localStorage.removeItem(TOKEN_KEY);
+    return { success: true };
+  };
+
   const openAuthModal = (tab: 'login' | 'signup' = 'login') => {
     setAuthModalTab(tab);
     setIsAuthModalOpen(true);
@@ -196,6 +215,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         refreshUser,
         updateProfile,
+        changePassword,
+        deleteAccount,
         openAuthModal,
         closeAuthModal,
       }}

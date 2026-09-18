@@ -552,6 +552,21 @@ router.patch('/auth/profile', (req: Request, res: Response): void => {
   res.json({ success: true, user: result.user });
 });
 
+router.post('/auth/password', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const result = globalAuthStore.changePassword(user.id, req.body?.currentPassword || '', req.body?.newPassword || '');
+  if (!result.success) { res.status(400).json({ error: result.error }); return; }
+  res.json({ success: true });
+});
+
+router.delete('/auth/account', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  if (!globalAuthStore.deleteUser(user.id)) { res.status(403).json({ error: 'This account cannot be deleted' }); return; }
+  res.json({ success: true });
+});
+
 // POST /api/auth/logout - Terminate session
 router.post('/auth/logout', (req: Request, res: Response): void => {
   const authHeader = req.headers.authorization;

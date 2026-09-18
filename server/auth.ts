@@ -327,6 +327,29 @@ class AuthStore {
     return { success: true, user: publicUser };
   }
 
+  public changePassword(userId: string, currentPassword: string, nextPassword: string): { success: boolean; error?: string } {
+    const user = this.users.get(userId);
+    if (!user || !verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) return { success: false, error: 'Current password is incorrect' };
+    if (nextPassword.length < 8) return { success: false, error: 'New password must be at least 8 characters' };
+    const hashed = hashPassword(nextPassword);
+    user.passwordHash = hashed.hash;
+    user.passwordSalt = hashed.salt;
+    this.sessions.forEach((session, token) => { if (session.userId === userId) this.sessions.delete(token); });
+    this.saveToDisk();
+    return { success: true };
+  }
+
+  public deleteUser(userId: string): boolean {
+    const user = this.users.get(userId);
+    if (!user || user.email.toLowerCase() === ADMIN_EMAIL) return false;
+    this.users.delete(userId);
+    this.emailToId.delete(user.email.toLowerCase());
+    this.usernameToId.delete(user.username.toLowerCase());
+    this.sessions.forEach((session, token) => { if (session.userId === userId) this.sessions.delete(token); });
+    this.saveToDisk();
+    return true;
+  }
+
   public deleteSession(token: string): boolean {
     if (this.sessions.has(token)) {
       this.sessions.delete(token);
