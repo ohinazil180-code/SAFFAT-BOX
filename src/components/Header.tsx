@@ -12,6 +12,9 @@ import {
   ChevronDown,
   Layers,
   Sparkles,
+  Settings,
+  Save,
+  X,
 } from 'lucide-react';
 import { formatShareCode } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
@@ -25,9 +28,14 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onQuickLookup }) => {
   const [quickCode, setQuickCode] = useState('');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  const [profileForm, setProfileForm] = useState({ username: '', name: '', avatarColor: '' });
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '' });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { user, userStats, openAuthModal, logout } = useAuth();
+  const { user, userStats, openAuthModal, logout, updateProfile, changePassword, deleteAccount } = useAuth();
 
   const handleQuickSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,6 +236,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onQuick
                       type="button"
                       onClick={() => {
                         setUserDropdownOpen(false);
+                        setProfileForm({ username: user.username, name: user.name, avatarColor: user.avatarColor });
+                        setPasswordForm({ current: '', next: '' });
+                        setSettingsError('');
+                        setSettingsSaved(false);
+                        setSettingsOpen(true);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg flex items-center gap-2 transition-colors"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Profile settings</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
                         setActiveTab('transfers');
                       }}
                       className="w-full px-3 py-2 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg flex items-center gap-2 transition-colors"
@@ -291,6 +315,39 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onQuick
           )}
         </div>
       </div>
+
+      {settingsOpen && user && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={(event) => { if (event.target === event.currentTarget) setSettingsOpen(false); }}>
+          <form className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl" onSubmit={async (event) => {
+            event.preventDefault();
+            setSettingsError('');
+            setSettingsSaved(false);
+            const result = await updateProfile(profileForm);
+            if (!result.success) { setSettingsError(result.error || 'Could not save changes'); return; }
+            if (passwordForm.current || passwordForm.next) {
+              const passwordResult = await changePassword(passwordForm.current, passwordForm.next);
+              if (!passwordResult.success) { setSettingsError(passwordResult.error || 'Could not change password'); return; }
+              setPasswordForm({ current: '', next: '' });
+            }
+            setSettingsSaved(true);
+          }}>
+            <div className="mb-5 flex items-center justify-between">
+              <div><h2 className="text-lg font-bold text-white">Profile settings</h2><p className="text-xs text-slate-400">Update how your account appears.</p></div>
+              <button type="button" aria-label="Close profile settings" onClick={() => setSettingsOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-4">
+              <label className="block text-xs text-slate-300">Display name<input value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500" /></label>
+              <label className="block text-xs text-slate-300">Username<input value={profileForm.username} onChange={(event) => setProfileForm({ ...profileForm, username: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500" /></label>
+              <div><span className="text-xs text-slate-300">Avatar color</span><div className="mt-2 flex flex-wrap gap-2">{['from-cyan-500 to-blue-600','from-emerald-400 to-teal-600','from-purple-500 to-indigo-600','from-rose-500 to-pink-600','from-amber-400 to-orange-500','from-fuchsia-500 to-pink-500'].map((color) => <button key={color} type="button" aria-label={`Select ${color} avatar`} onClick={() => setProfileForm({ ...profileForm, avatarColor: color })} className={`h-8 w-8 rounded-lg bg-gradient-to-br ${color} ${profileForm.avatarColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''}`} />)}</div></div>
+              <div className="border-t border-slate-800 pt-4"><p className="mb-2 text-xs font-semibold text-slate-300">Change password</p><div className="grid gap-2 sm:grid-cols-2"><input type="password" placeholder="Current password" value={passwordForm.current} onChange={(event) => setPasswordForm({ ...passwordForm, current: event.target.value })} className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500" /><input type="password" placeholder="New password (8+ chars)" value={passwordForm.next} onChange={(event) => setPasswordForm({ ...passwordForm, next: event.target.value })} className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500" /></div></div>
+            </div>
+            {settingsError && <p className="mt-4 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{settingsError}</p>}
+            {settingsSaved && <p className="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">Profile updated successfully.</p>}
+            <button type="submit" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400"><Save className="h-4 w-4" />Save changes</button>
+            <button type="button" onClick={async () => { if (window.confirm('Delete your account permanently?')) { const result = await deleteAccount(); if (!result.success) setSettingsError(result.error || 'Could not delete account'); else setSettingsOpen(false); } }} className="mt-3 w-full text-xs text-rose-400 hover:text-rose-300">Delete account</button>
+          </form>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <div className="flex lg:hidden border-t border-white/[0.06] bg-slate-950/95 px-2 py-1.5 justify-around">

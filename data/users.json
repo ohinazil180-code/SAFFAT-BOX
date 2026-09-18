@@ -1,0 +1,69 @@
+{
+  "users": [
+    {
+      "id": "usr_demo_alex_dropcode",
+      "email": "alex@dropcode.io",
+      "username": "alex_dropcode",
+      "name": "Alex Rivera",
+      "passwordHash": "d42850f038fb8d99192ef44e395962b9e850649e30a1113b5907c14c98289709e7236ba8eb73f9e1b1a4679656605b0908464687e3d82549b8efd7f637ebf95d",
+      "passwordSalt": "72d96cfc78ff4aab79f9139532470cbf",
+      "avatarColor": "from-cyan-500 to-blue-600",
+      "createdAt": "2026-09-18T15:43:44.143Z",
+      "lastLoginAt": "2026-09-18T16:01:10.527Z"
+    },
+    {
+      "id": "usr_5f4581be-9713-4a0d-bf1c-2d004e3907c0",
+      "email": "qa1789746451'@mail.test",
+      "username": "qa_user",
+      "name": "QA User",
+      "passwordHash": "7e6655316f1e7f7744331f3eed6f39c411166d63bc53b80638a0311212cc74c6b1c7e58ee900d326ba3cd591e6b38c73f7260aee3b22e50a6acf58ba355eeaf8",
+      "passwordSalt": "bd04b7c3f5b961698de09e5460cb871d",
+      "avatarColor": "from-purple-500 to-indigo-600",
+      "createdAt": "2026-09-18T15:47:31.372Z",
+      "lastLoginAt": "2026-09-18T15:47:31.372Z"
+    },
+    {
+      "id": "usr_support_admin",
+      "email": "admin@gmail.com",
+      "username": "admin",
+      "name": "Support Admin",
+      "passwordHash": "6078615cdca656e693a822cbc613c14fd76d501148ec12aff25c1273e35634bbc0960311c579144c61fe3f9d79219b0aaeacdc7fbd3c7ced4742c26ece621b51",
+      "passwordSalt": "898a50036a5754f11ce2a26e1282e321",
+      "avatarColor": "from-fuchsia-500 to-pink-500",
+      "createdAt": "2026-09-18T15:51:23.959Z",
+      "lastLoginAt": "2026-09-18T15:59:38.083Z"
+    }
+  ],
+  "sessions": [
+    {
+      "token": "b25e1b3beae5f7547b7bd9c07159a46da80c8f8f714c6b8928f787ec579dad39",
+      "userId": "usr_5f4581be-9713-4a0d-bf1c-2d004e3907c0",
+      "createdAt": "2026-09-18T15:47:31.372Z",
+      "expiresAt": "2026-10-18T15:47:31.372Z"
+    },
+    {
+      "token": "255ee68079ad58f8e26e51dd2d897e2cb425fffd6b287c78a518173a353df22f",
+      "userId": "usr_support_admin",
+      "createdAt": "2026-09-18T15:51:28.532Z",
+      "expiresAt": "2026-10-18T15:51:28.532Z"
+    },
+    {
+      "token": "37ae4e62e47c3cd51b88e0345e329bfb006c8917feb6f51a7fbaf3c590454d26",
+      "userId": "usr_support_admin",
+      "createdAt": "2026-09-18T15:51:32.893Z",
+      "expiresAt": "2026-10-18T15:51:32.893Z"
+    },
+    {
+      "token": "c2134a78e1b16ce30ed292b62902faaed948ae0f279b38f1097232fe5688f945",
+      "userId": "usr_support_admin",
+      "createdAt": "2026-09-18T15:59:38.084Z",
+      "expiresAt": "2026-10-18T15:59:38.084Z"
+    },
+    {
+      "token": "39b2fa7a395b6e9dfdefade46c0a5be5b8ceb1e4c933f801bb7034be519a8041",
+      "userId": "usr_demo_alex_dropcode",
+      "createdAt": "2026-09-18T16:01:10.528Z",
+      "expiresAt": "2026-10-18T16:01:10.528Z"
+    }
+  ]
+}

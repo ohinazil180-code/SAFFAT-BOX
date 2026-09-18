@@ -5,6 +5,7 @@ import { ReceiveView } from './components/ReceiveView';
 import { TransfersView } from './components/TransfersView';
 import { ArchitectureView } from './components/ArchitectureView';
 import { AuthModal } from './components/AuthModal';
+import { ChatPanel } from './components/ChatPanel';
 import { CreatedShareResult } from './types';
 import { Radio, Shield, Zap, Lock, Terminal } from 'lucide-react';
 
@@ -100,6 +101,7 @@ export default function App() {
 
       {/* Authentication Modal */}
       <AuthModal />
+      <ChatPanel />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { User, UserSession, PublicUser, UserStats } from './types.js';
 import { hashPassword, verifyPassword } from './utils/crypto.js';
 import { globalShareStore } from './store.js';
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from './chat.js';
 
 const AVATAR_GRADIENTS = [
   'from-cyan-500 to-blue-600',
@@ -57,10 +58,23 @@ class AuthStore {
       console.warn('[AUTH] Could not load users from disk, starting fresh', err);
     }
 
-    // Seed a friendly demo account if no users exist
-    if (this.users.size === 0) {
-      this.seedDemoUser();
-    }
+    // Seed demo data only when the store is empty, but always guarantee the support admin exists.
+    if (this.users.size === 0) this.seedDemoUser();
+    this.ensureAdminUser();
+  }
+
+  private ensureAdminUser() {
+    if (this.emailToId.has(ADMIN_EMAIL)) return;
+    const hashed = hashPassword(ADMIN_PASSWORD);
+    const admin: User = {
+      id: 'usr_support_admin', email: ADMIN_EMAIL, username: 'admin', name: 'Support Admin',
+      passwordHash: hashed.hash, passwordSalt: hashed.salt, avatarColor: AVATAR_GRADIENTS[1],
+      createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(),
+    };
+    this.users.set(admin.id, admin);
+    this.emailToId.set(ADMIN_EMAIL, admin.id);
+    this.usernameToId.set('admin', admin.id);
+    this.saveToDisk();
   }
 
   private seedDemoUser() {
@@ -277,6 +291,63 @@ class AuthStore {
 
     const user = this.users.get(session.userId);
     return user ? this.toPublicUser(user) : null;
+  }
+
+  public updateUser(
+    userId: string,
+    payload: { username?: string; name?: string; avatarColor?: string }
+  ): { success: boolean; user?: PublicUser; error?: string } {
+    const user = this.users.get(userId);
+    if (!user) return { success: false, error: 'User account not found' };
+
+    const nextUsername = payload.username?.trim();
+    if (nextUsername && !/^[a-zA-Z0-9_-]{3,20}$/.test(nextUsername)) {
+      return { success: false, error: 'Username must be 3-20 characters and only contain letters, numbers, hyphens, or underscores' };
+    }
+
+    if (nextUsername && nextUsername.toLowerCase() !== user.username.toLowerCase()) {
+      const existingId = this.usernameToId.get(nextUsername.toLowerCase());
+      if (existingId && existingId !== userId) return { success: false, error: 'This username is already taken' };
+      this.usernameToId.delete(user.username.toLowerCase());
+      this.usernameToId.set(nextUsername.toLowerCase(), userId);
+      user.username = nextUsername;
+    }
+
+    if (payload.name !== undefined) {
+      const nextName = payload.name.trim();
+      user.name = nextName || user.username;
+    }
+    if (payload.avatarColor && AVATAR_GRADIENTS.includes(payload.avatarColor)) {
+      user.avatarColor = payload.avatarColor;
+    }
+
+    this.saveToDisk();
+    const publicUser = this.toPublicUser(user);
+    this.notify('profile_updated', publicUser);
+    return { success: true, user: publicUser };
+  }
+
+  public changePassword(userId: string, currentPassword: string, nextPassword: string): { success: boolean; error?: string } {
+    const user = this.users.get(userId);
+    if (!user || !verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) return { success: false, error: 'Current password is incorrect' };
+    if (nextPassword.length < 8) return { success: false, error: 'New password must be at least 8 characters' };
+    const hashed = hashPassword(nextPassword);
+    user.passwordHash = hashed.hash;
+    user.passwordSalt = hashed.salt;
+    this.sessions.forEach((session, token) => { if (session.userId === userId) this.sessions.delete(token); });
+    this.saveToDisk();
+    return { success: true };
+  }
+
+  public deleteUser(userId: string): boolean {
+    const user = this.users.get(userId);
+    if (!user || user.email.toLowerCase() === ADMIN_EMAIL) return false;
+    this.users.delete(userId);
+    this.emailToId.delete(user.email.toLowerCase());
+    this.usernameToId.delete(user.username.toLowerCase());
+    this.sessions.forEach((session, token) => { if (session.userId === userId) this.sessions.delete(token); });
+    this.saveToDisk();
+    return true;
   }
 
   public deleteSession(token: string): boolean {

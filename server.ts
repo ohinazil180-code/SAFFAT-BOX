@@ -1,7 +1,10 @@
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import apiRouter from './server/routes/api.js';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import { chatStore, isAdminEmail, conversationForUser } from './server/chat.js';
+import { globalAuthStore } from './server/auth.js';
 
 async function startServer() {
   const app = express();
@@ -28,22 +31,27 @@ async function startServer() {
     res.redirect(`/?code=${encodeURIComponent(code)}`);
   });
 
-  // Vite middleware in dev, static files in production
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  // Serve the prebuilt client directly. The custom Express server owns the
+  // preview, so Vite middleware/HMR is intentionally never started.
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const httpServer = createServer(app);
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws/chat' });
+  wss.on('connection', (socket, request) => {
+    const token = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`).searchParams.get('token') || '';
+    const user = globalAuthStore.getUserByToken(token);
+    if (!user) { socket.close(1008, 'Authentication required'); return; }
+    const canRead = (message: { conversationId: string }) => isAdminEmail(user.email) || message.conversationId === conversationForUser(user.id);
+    const unsubscribe = chatStore.subscribe((message) => {
+      if (canRead(message) && socket.readyState === 1) socket.send(JSON.stringify({ type: 'chat.message', message }));
+    });
+    socket.on('close', unsubscribe);
+  });
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`[DROP CODE] Server running on http://0.0.0.0:${PORT}`);
   });
 }

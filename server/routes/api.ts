@@ -10,6 +10,7 @@ import { globalAuthStore } from '../auth.js';
 import { activeStorageProvider } from '../storage/storageProvider.js';
 import { calculateChecksum, sanitizeFilename, isBrowserSafePreview, sanitizeShareCode } from '../utils/crypto.js';
 import { StoredFile, PublicShareResponse, PublicFileInfo, PublicUser } from '../types.js';
+import { chatStore, conversationForUser, conversationForAdmin, isAdminEmail, normalizeChatBody } from '../chat.js';
 
 const router = express.Router();
 
@@ -535,6 +536,37 @@ router.get('/auth/me', (req: Request, res: Response): void => {
   res.json({ success: true, user, stats });
 });
 
+// PATCH /api/auth/profile - Update the authenticated user's profile
+router.patch('/auth/profile', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+  const { username, name, avatarColor } = req.body || {};
+  const result = globalAuthStore.updateUser(user.id, { username, name, avatarColor });
+  if (!result.success) {
+    res.status(400).json({ error: result.error });
+    return;
+  }
+  res.json({ success: true, user: result.user });
+});
+
+router.post('/auth/password', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const result = globalAuthStore.changePassword(user.id, req.body?.currentPassword || '', req.body?.newPassword || '');
+  if (!result.success) { res.status(400).json({ error: result.error }); return; }
+  res.json({ success: true });
+});
+
+router.delete('/auth/account', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  if (!globalAuthStore.deleteUser(user.id)) { res.status(403).json({ error: 'This account cannot be deleted' }); return; }
+  res.json({ success: true });
+});
+
 // POST /api/auth/logout - Terminate session
 router.post('/auth/logout', (req: Request, res: Response): void => {
   const authHeader = req.headers.authorization;
@@ -672,6 +704,67 @@ router.get('/stats', (req: Request, res: Response): void => {
 // GET /api/health
 router.get('/health', (req: Request, res: Response): void => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+router.get('/chat/conversations', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user || !isAdminEmail(user.email)) { res.status(403).json({ error: 'Admin access required' }); return; }
+  res.json({ conversations: chatStore.getConversations().map((conversation) => ({ ...conversation, meta: chatStore.getConversationMeta(conversation.conversationId) })) });
+});
+
+router.patch('/chat/:conversationId', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user || !isAdminEmail(user.email)) { res.status(403).json({ error: 'Admin access required' }); return; }
+  const conversationId = conversationForAdmin(req.params.conversationId);
+  const patch = {
+    status: ['open', 'pending', 'closed'].includes(req.body?.status) ? req.body.status : undefined,
+    priority: ['normal', 'high', 'urgent'].includes(req.body?.priority) ? req.body.priority : undefined,
+    assignedTo: typeof req.body?.assignedTo === 'string' ? req.body.assignedTo.trim().slice(0, 120) : undefined,
+  };
+  res.json({ success: true, meta: chatStore.updateConversation(conversationId, patch) });
+});
+
+router.get('/chat/:conversationId', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const requested = conversationForAdmin(req.params.conversationId);
+  if (!isAdminEmail(user.email) && requested !== conversationForUser(user.id)) { res.status(403).json({ error: 'Not allowed' }); return; }
+  res.json({ messages: chatStore.getConversation(requested) });
+});
+
+router.post('/chat/:conversationId/messages', (req: Request, res: Response): void => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const conversationId = conversationForAdmin(req.params.conversationId);
+  if (!isAdminEmail(user.email) && conversationId !== conversationForUser(user.id)) { res.status(403).json({ error: 'Not allowed' }); return; }
+  const body = normalizeChatBody(req.body?.body);
+  if (!body) { res.status(400).json({ error: 'Message cannot be empty' }); return; }
+  const message = chatStore.addMessage({ conversationId, senderId: user.id, senderName: isAdminEmail(user.email) ? 'Support Admin' : user.name, senderRole: isAdminEmail(user.email) ? 'admin' : 'user', body });
+  res.status(201).json({ message });
+});
+
+router.post('/chat/:conversationId/attachments', upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const conversationId = conversationForAdmin(req.params.conversationId);
+  if (!isAdminEmail(user.email) && conversationId !== conversationForUser(user.id)) { res.status(403).json({ error: 'Not allowed' }); return; }
+  const file = req.file;
+  if (!file) { res.status(400).json({ error: 'File is required' }); return; }
+  if (file.size > 25 * 1024 * 1024) { res.status(413).json({ error: 'Files must be 25MB or smaller' }); return; }
+  const fileId = crypto.randomUUID();
+  const storagePath = path.join('chat', fileId.slice(0, 2), `${fileId}_${sanitizeFilename(file.originalname)}`);
+  await activeStorageProvider.upload(storagePath, file.buffer, file.mimetype);
+  const attachment = { name: file.originalname, mimeType: file.mimetype || 'application/octet-stream', size: file.size, storagePath, url: `/api/chat/attachments/${fileId}` };
+  const message = chatStore.addMessage({ conversationId, senderId: user.id, senderName: isAdminEmail(user.email) ? 'Support Admin' : user.name, senderRole: isAdminEmail(user.email) ? 'admin' : 'user', body: `Attached ${file.originalname}`, attachment });
+  res.status(201).json({ message });
+});
+
+router.get('/chat/attachments/:fileId', async (req: Request, res: Response): Promise<void> => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const message = chatStore.findAttachment(req.params.fileId);
+  if (!message || (!isAdminEmail(user.email) && message.conversationId !== conversationForUser(user.id))) { res.status(404).json({ error: 'Attachment not found' }); return; }
+  try { const buffer = await activeStorageProvider.downloadBuffer(message.attachment!.storagePath); res.type(message.attachment!.mimeType).setHeader('Content-Disposition', `inline; filename="${sanitizeFilename(message.attachment!.name)}"`).send(buffer); } catch { res.status(404).json({ error: 'Attachment not found' }); }
 });
 
 export default router;
