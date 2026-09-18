@@ -31,7 +31,11 @@ async function startServer() {
   // Vite middleware in dev, static files in production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      // The Express server owns the HTTP listener, so Vite cannot handle the
+      // WebSocket upgrade required by HMR in middleware mode. Disable HMR to
+      // prevent the injected Vite client from opening a connection that can
+      // never be upgraded by this server.
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);

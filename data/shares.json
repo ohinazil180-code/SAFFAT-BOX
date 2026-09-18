@@ -11,7 +11,7 @@
       "passwordSalt": null,
       "passwordEnabled": false,
       "oneTimeShare": false,
-      "status": "active",
+      "status": "expired",
       "files": [
         {
           "id": "ed4e9ee5-3841-4b0e-b122-cc5d0c94e647",
@@ -27,6 +27,13 @@
     }
   ],
   "events": [
+    {
+      "id": "e8e92e86-fb2b-40e7-8856-100cdd19a9bb",
+      "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",
+      "shareCode": "9QBX-G5FE",
+      "eventType": "share_expired",
+      "timestamp": "2026-09-18T15:44:14.140Z"
+    },
     {
       "id": "fadf60ed-8832-494e-852e-94ea56af0702",
       "shareId": "887c4208-45c4-4136-85c7-0978f9e4d861",

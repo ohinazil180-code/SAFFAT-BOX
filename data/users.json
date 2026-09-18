@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": "usr_demo_alex_dropcode",
+      "email": "alex@dropcode.io",
+      "username": "alex_dropcode",
+      "name": "Alex Rivera",
+      "passwordHash": "d42850f038fb8d99192ef44e395962b9e850649e30a1113b5907c14c98289709e7236ba8eb73f9e1b1a4679656605b0908464687e3d82549b8efd7f637ebf95d",
+      "passwordSalt": "72d96cfc78ff4aab79f9139532470cbf",
+      "avatarColor": "from-cyan-500 to-blue-600",
+      "createdAt": "2026-09-18T15:43:44.143Z",
+      "lastLoginAt": "2026-09-18T15:43:44.145Z"
+    }
+  ],
+  "sessions": []
+}
