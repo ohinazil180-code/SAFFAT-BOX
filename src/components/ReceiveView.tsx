@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PublicShare, PublicFileInfo } from '../types';
 import { formatShareCode, formatBytes, formatTimeRemaining, getFileCategory } from '../utils/formatters';
 import { FilePreviewModal } from './FilePreviewModal';
+import { readJsonResponse } from '../utils/http';
 import { ShareLinksDrawer } from './ShareLinksDrawer';
 import {
   Download,
@@ -62,7 +63,7 @@ export const ReceiveView: React.FC<ReceiveViewProps> = ({ initialCode }) => {
     try {
       const url = `/api/shares/${clean}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
       const res = await fetch(url);
-      const data = await res.json();
+      const data = await readJsonResponse<PublicShare & { error?: string }>(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to retrieve share');
@@ -104,7 +105,7 @@ export const ReceiveView: React.FC<ReceiveViewProps> = ({ initialCode }) => {
         body: JSON.stringify({ password }),
       });
 
-      const data = await res.json();
+      const data = await readJsonResponse<{ error?: string; token?: string }>(res);
       if (!res.ok) {
         throw new Error(data.error || 'Incorrect password');
       }
