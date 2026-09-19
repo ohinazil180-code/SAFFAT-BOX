@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, UserStats, AuthResponse } from '../types';
+import { readJsonResponse } from '../utils/http';
 
 interface AuthContextType {
   user: User | null;
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await readJsonResponse<{ user: User; stats?: UserStats; success: boolean; token: string; error?: string }>(res);
         setUser(data.user);
         setUserStats(data.stats || null);
       } else {
@@ -78,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ identifier, password }),
       });
 
-      const data = await res.json();
+      const data = await readJsonResponse<{ user: User; stats?: UserStats; success: boolean; token: string; error?: string }>(res);
       if (!res.ok || !data.success) {
         return { success: false, error: data.error || 'Failed to sign in' };
       }
@@ -109,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, username, password, name }),
       });
 
-      const data = await res.json();
+      const data = await readJsonResponse<{ user: User; stats?: UserStats; success: boolean; token: string; error?: string }>(res);
       if (!res.ok || !data.success) {
         return { success: false, error: data.error || 'Failed to create account' };
       }
@@ -166,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(profile),
       });
-      const data = await res.json();
+      const data = await readJsonResponse<{ user: User; stats?: UserStats; success: boolean; token: string; error?: string }>(res);
       if (!res.ok || !data.success) return { success: false, error: data.error || 'Could not update profile' };
       setUser(data.user);
       return { success: true };
@@ -178,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const changePassword = async (currentPassword: string, newPassword: string) => {
     if (!token) return { success: false, error: 'Please sign in first' };
     const res = await fetch('/api/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ currentPassword, newPassword }) });
-    const data = await res.json();
+    const data = await readJsonResponse<{ user: User; stats?: UserStats; success: boolean; token: string; error?: string }>(res);
     if (!res.ok) return { success: false, error: data.error || 'Could not change password' };
     return { success: true };
   };
@@ -186,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteAccount = async () => {
     if (!token) return { success: false, error: 'Please sign in first' };
     const res = await fetch('/api/auth/account', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
+    const data = await readJsonResponse<{ user: User; stats?: UserStats; success: boolean; token: string; error?: string }>(res);
     if (!res.ok) return { success: false, error: data.error || 'Could not delete account' };
     setUser(null); setUserStats(null); setToken(null); localStorage.removeItem(TOKEN_KEY);
     return { success: true };
