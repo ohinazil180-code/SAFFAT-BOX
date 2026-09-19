@@ -724,6 +724,14 @@ router.patch('/chat/:conversationId', (req: Request, res: Response): void => {
   res.json({ success: true, meta: chatStore.updateConversation(conversationId, patch) });
 });
 
+router.get('/chat/attachments/:fileId', async (req: Request, res: Response): Promise<void> => {
+  const user = getAuthUser(req);
+  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
+  const message = chatStore.findAttachment(req.params.fileId);
+  if (!message || (!isAdminEmail(user.email) && message.conversationId !== conversationForUser(user.id))) { res.status(404).json({ error: 'Attachment not found' }); return; }
+  try { const buffer = await activeStorageProvider.downloadBuffer(message.attachment!.storagePath); res.type(message.attachment!.mimeType).setHeader('Content-Disposition', `inline; filename="${sanitizeFilename(message.attachment!.name)}"`).send(buffer); } catch { res.status(404).json({ error: 'Attachment not found' }); }
+});
+
 router.get('/chat/:conversationId', (req: Request, res: Response): void => {
   const user = getAuthUser(req);
   if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
@@ -759,12 +767,5 @@ router.post('/chat/:conversationId/attachments', upload.single('file'), async (r
   res.status(201).json({ message });
 });
 
-router.get('/chat/attachments/:fileId', async (req: Request, res: Response): Promise<void> => {
-  const user = getAuthUser(req);
-  if (!user) { res.status(401).json({ error: 'Authentication required' }); return; }
-  const message = chatStore.findAttachment(req.params.fileId);
-  if (!message || (!isAdminEmail(user.email) && message.conversationId !== conversationForUser(user.id))) { res.status(404).json({ error: 'Attachment not found' }); return; }
-  try { const buffer = await activeStorageProvider.downloadBuffer(message.attachment!.storagePath); res.type(message.attachment!.mimeType).setHeader('Content-Disposition', `inline; filename="${sanitizeFilename(message.attachment!.name)}"`).send(buffer); } catch { res.status(404).json({ error: 'Attachment not found' }); }
-});
 
 export default router;
