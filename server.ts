@@ -24,6 +24,10 @@ async function startServer() {
 
   // Mount API routes
   app.use('/api', apiRouter);
+  app.use('/api', (error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const status = error?.code === 'LIMIT_FILE_SIZE' ? 413 : Number(error?.statusCode || error?.status) || 500;
+    res.status(status).json({ error: status === 413 ? 'File is too large' : 'The server could not complete this request' });
+  });
 
   // Clean short share routes: /s/:code and /share/:code redirect to /?code=:code
   app.get(['/s/:code', '/share/:code'], (req, res) => {

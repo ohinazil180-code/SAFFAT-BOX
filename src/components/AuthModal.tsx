@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { readJsonResponse } from '../utils/http';
 
 export const AuthModal: React.FC = () => {
   const { isAuthModalOpen, authModalTab, closeAuthModal, login, signup } = useAuth();
@@ -64,7 +65,7 @@ export const AuthModal: React.FC = () => {
       setUsernameStatus({ checking: true, available: null, message: 'Checking availability...' });
       try {
         const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username.trim())}`);
-        const data = await res.json();
+        const data = await readJsonResponse<{ available: boolean; message: string }>(res);
         setUsernameStatus({
           checking: false,
           available: data.available,

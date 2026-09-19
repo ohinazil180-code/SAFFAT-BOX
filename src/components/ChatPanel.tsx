@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { MessageCircle, Send, X, ShieldCheck, Users, Wifi, Search, MoreHorizontal, CheckCircle2, Clock3, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { readJsonResponse } from '../utils/http';
 
 type Message = { id: string; conversationId: string; senderName: string; senderRole: 'user' | 'admin'; body: string; createdAt: string };
 type Conversation = Message & { meta?: { status: 'open' | 'pending' | 'closed'; priority: 'normal' | 'high' | 'urgent'; assignedTo?: string } };
@@ -57,7 +58,7 @@ export const ChatPanel: React.FC = () => {
     const response = attachment
       ? await fetch(`/api/chat/${encodeURIComponent(conversationId)}/attachments`, { method: 'POST', headers: { Authorization: `Bearer ${token || ''}` }, body: (() => { const form = new FormData(); form.append('file', attachment); return form; })() })
       : await fetch(`/api/chat/${encodeURIComponent(conversationId)}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` }, body: JSON.stringify({ body }) });
-    if (response.ok) { const data = await response.json(); setMessages((current) => current.some((item) => item.id === data.message.id) ? current : [...current, data.message]); setBody(''); setAttachment(null); } else { const data = await response.json().catch(() => ({})); setAttachmentError(data.error || 'Could not send attachment'); }
+    try { const data = await readJsonResponse<{ message?: Message; error?: string }>(response); if (response.ok && data.message) { setMessages((current) => current.some((item) => item.id === data.message!.id) ? current : [...current, data.message!]); setBody(''); setAttachment(null); } else { setAttachmentError(data.error || 'Could not send attachment'); } } catch (error) { setAttachmentError(error instanceof Error ? error.message : 'Could not send attachment'); }
   };
 
   const updateConversation = async (patch: { status?: string; priority?: string }) => {
